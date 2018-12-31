@@ -1,9 +1,8 @@
 """
-.. module:: ND2 reader
-    :platform: Windows
-    :synopsis: Class for reading ND2 files
-
+.. autoclass:: nd2reader
+    :members:
 """
+import nd2sdk_wrapper
 
 class nd2reader:
 

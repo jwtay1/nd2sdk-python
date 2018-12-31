@@ -1,8 +1,31 @@
-from ctypes import c_int, c_uint32, c_uint64, c_float, c_char, c_char_p, c_wchar, c_wchar_p, c_size_t, c_void_p, Structure, cdll, POINTER
-import os
+"""
+.. automodule:: nd2sdk_wrapper
+    :members:
 
-nd2File = cdll.LoadLibrary(os.path.join(os.path.dirname(os.path.abspath(__file__)),"..", "lib", "win", "Nd2File.dll"))
-nd2Read = cdll.LoadLibrary(os.path.join(os.path.dirname(os.path.abspath(__file__)),"..", "lib", "win", "Nd2ReadSdk.dll"))
+"""
+
+from ctypes import (c_int, c_uint32, c_uint64, c_float, c_char, c_char_p, 
+    c_wchar, c_wchar_p, c_size_t, c_void_p, Structure, cdll, POINTER)
+
+from sys import platform
+from pathlib import Path
+
+#Load the required library files. Both "File" and "ReadSdk" files are needed.
+basePath =  Path(__file__).parent / ".." / "lib"
+if platform.startswith("win"):
+    libPath = str((basePath / "win" / "Nd2File.dll").resolve())
+    libPath2 = str((basePath / "win" / "Nd2ReadSdk.dll").resolve())
+elif platform.startswith("linux"):
+    libPath = str((basePath / "linux" / "Nd2File.so").resolve())
+    libPath2 = str((basePath / "linux" / "Nd2ReadSdk.so").resolve())
+elif platform.startswith("darwin"):
+    libPath = str((basePath / "mac" / "Nd2File.dylib").resolve())
+    libPath2 = str((basePath / "mac" / "Nd2ReadSdk.dylib").resolve())
+else:
+    pass
+
+nd2File = cdll.LoadLibrary(libPath)
+nd2Read = cdll.LoadLibrary(libPath2)
 
 # Typedefs
 
