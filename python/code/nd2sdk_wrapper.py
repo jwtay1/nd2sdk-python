@@ -1,6 +1,8 @@
-"""
-.. automodule:: nd2sdk_wrapper
-    :members:
+""" Python wrapper for the ND2 SDK
+
+
+.. automodule:: nd2sdk
+    :members: Lim_FileOpenForRead
 
 """
 
@@ -11,7 +13,7 @@ from sys import platform
 from pathlib import Path
 
 #Load the required library files. Both "File" and "ReadSdk" files are needed.
-basePath =  Path(__file__).parent / ".." / "lib"
+basePath =  Path(__file__).parent / ".." / ".." / "lib"
 if platform.startswith("win"):
     libPath = str((basePath / "win" / "Nd2File.dll").resolve())
     libPath2 = str((basePath / "win" / "Nd2ReadSdk.dll").resolve())
@@ -93,6 +95,18 @@ class LIMPICTURE (Structure):
 # On succes returns (non-null) \c LIMFILEHANDLE which must be closed with \c Lim_FileClose to deallocate resources.
 # \sa Lim_FileClose(), Lim_FileOpenForReadUtf8(LIMCSTR szFileNameUtf8)
 # */
+
+
+# Lim_FileOpenForRead
+#   Opens an ND2 file for reading. This is widechar version.
+#
+# Parameters:
+#   wszFileName: The filename (system wide-char) to be used.
+#
+# Returns:
+#   int (c nullptr): If file cannot be opened. Otherwise, returns a pointer to #   the file.
+
+
 Lim_FileOpenForRead = nd2Read.Lim_FileOpenForRead
 Lim_FileOpenForRead.argtypes = [LIMCWSTR]
 Lim_FileOpenForRead.restype = LIMFILEHANDLE
@@ -182,12 +196,17 @@ Lim_FileGetCoordsFromSeqIndex = nd2Read.Lim_FileGetCoordsFromSeqIndex
 Lim_FileGetCoordsFromSeqIndex.argtypes = [LIMFILEHANDLE, LIMUINT, POINTER(LIMUINT), LIMSIZE]
 Lim_FileGetCoordsFromSeqIndex.restype = LIMSIZE
 
-# /*!
-# \brief Returns attributes as JSON (object) string.
-# \param[in] hFile The handle to an opened file.
-
+# Lim_FileGetAttributes
+#   Returns attributes as JSON (object) string.
+# 
+# Parameters:
+#   hFile: The handle to an opened file.
+#
+# Returns:
+#   byteAttr: Attributes as a bytes object. Convert this to string using .decode()
+#
 # Attributes are always present in the file and contain following members:
-
+#
 # member                      | type               | description
 # --------------------------- | ------------------ | ---------------
 # bitsPerComponentInMemory    | number             | bits allocated to hold each component
@@ -202,13 +221,11 @@ Lim_FileGetCoordsFromSeqIndex.restype = LIMSIZE
 # tileWidthPx                 | number, optional   | suggested tile width if saved as tiled
 # widthBytes                  | number             | number of bytes from the beginning of one line to the next one
 # widthPx                     | number             | width of the image
-
+#
 # The memory size for image buffer is calculated as widthBytes * heightPx.
-
+#
 # Returned string must be deleted using Lim_FileFreeString().
 
-# \sa Lim_FileFreeString()
-# */
 Lim_FileGetAttributes = nd2Read.Lim_FileGetAttributes
 Lim_FileGetAttributes.argtypes = [LIMFILEHANDLE]
 Lim_FileGetAttributes.restype = LIMSTR

@@ -10,6 +10,10 @@ Welcome to ND2 SDK's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+nd2reader
+=========
+.. automodule:: nd2reader
+    :members:
 
 
 Indices and tables
