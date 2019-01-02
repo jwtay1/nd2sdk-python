@@ -1,11 +1,11 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
+python/code/__pycache__/
 *.py[cod]
 *$py.class
 
 # Sphinx documentation
-docs/build/
-docs/make.bat
+python/docs/build/
+python/docs/make.bat
 
 # VSCode
 .vscode/

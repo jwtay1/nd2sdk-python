@@ -1,13 +1,17 @@
 """ Python wrapper for the ND2 SDK
 
+This module uses the ctypes package to generate a Python interface for the ND2 SDK libraries.
 
-.. automodule:: nd2sdk
-    :members: Lim_FileOpenForRead
+The libraries are included in this repository but are also available in their original forms from https://www.nd2sdk.com/. The current supported version is 0.2.0.0. Both "Nd2File" and "Nd2ReadSdk" are needed.
+
+Library functions:
+    LIMFILEHANDLE(c_void_p) Lim_FileOpenForRead(LIMWCHAR)
+
 
 """
 
 from ctypes import (c_int, c_uint32, c_uint64, c_float, c_char, c_char_p, 
-    c_wchar, c_wchar_p, c_size_t, c_void_p, Structure, cdll, POINTER)
+    c_wchar, c_wchar_p, c_size_t, c_void_p, Structure, cdll, POINTER, c_uint)
 
 from sys import platform
 from pathlib import Path
@@ -48,7 +52,6 @@ LIMRESULT = c_int       # Integer boolean values
 
 LIMFILEHANDLE = c_void_p    # Opaque type representing an opened ND2 file
 
-
 # Definitions
 
 LIM_ERR = {
@@ -75,7 +78,7 @@ LIM_ERR = {
 }
 
 class LIMPICTURE (Structure):
-    _fields_ = [("uitWidth", LIMUINT),
+    _fields_ = [("uiWidth", LIMUINT),
                 ("uiHeight", LIMUINT),
                 ("uiBitsPerComp", LIMUINT),
                 ("uiComponents", LIMUINT),
@@ -83,6 +86,7 @@ class LIMPICTURE (Structure):
                 ("uiSize", LIMSIZE),
                 ("pImageData", c_void_p)                
                 ]
+
 
 
 # Function prototypes
@@ -96,7 +100,7 @@ class LIMPICTURE (Structure):
 # \sa Lim_FileClose(), Lim_FileOpenForReadUtf8(LIMCSTR szFileNameUtf8)
 # */
 
-
+"""
 # Lim_FileOpenForRead
 #   Opens an ND2 file for reading. This is widechar version.
 #
@@ -105,7 +109,7 @@ class LIMPICTURE (Structure):
 #
 # Returns:
 #   int (c nullptr): If file cannot be opened. Otherwise, returns a pointer to #   the file.
-
+"""
 
 Lim_FileOpenForRead = nd2Read.Lim_FileOpenForRead
 Lim_FileOpenForRead.argtypes = [LIMCWSTR]
@@ -121,7 +125,7 @@ Lim_FileOpenForRead.restype = LIMFILEHANDLE
 # */
 Lim_FileClose = nd2Read.Lim_FileClose
 Lim_FileClose.argtypes = [LIMFILEHANDLE]
-Lim_FileClose.restype = LIMRESULT
+Lim_FileClose.restype = None
 
 # /*!
 # \brief Opens an ND2 file for reading. This is multi-byte version (the encoding is utf-8).
@@ -193,7 +197,7 @@ Lim_FileGetSeqIndexFromCoords.restype = LIMBOOL
 # If coords is nullptr the function only returns the dimension of coordinate required to store the result.
 # */
 Lim_FileGetCoordsFromSeqIndex = nd2Read.Lim_FileGetCoordsFromSeqIndex
-Lim_FileGetCoordsFromSeqIndex.argtypes = [LIMFILEHANDLE, LIMUINT, POINTER(LIMUINT), LIMSIZE]
+Lim_FileGetCoordsFromSeqIndex.argtypes = [LIMFILEHANDLE, LIMUINT, POINTER(LIMUINT * 4), LIMSIZE]
 Lim_FileGetCoordsFromSeqIndex.restype = LIMSIZE
 
 # Lim_FileGetAttributes

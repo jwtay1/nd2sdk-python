@@ -22,8 +22,7 @@ class TestND2reader(unittest.TestCase):
     def testConstruct(self):
         R = ND2reader("D:\\Jian\\Documents\\Projects\\myprojects\\ND2SDK\\nd2sdk-wrappers\\sampleND2\\sampleND2.nd2")
 
-        print(R.widthPx)
-
+        R.getImage(1)
 
 if __name__ == '__main__':
     unittest.main()

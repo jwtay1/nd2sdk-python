@@ -15,6 +15,10 @@ nd2reader
 .. automodule:: nd2reader
     :members:
 
+nd2sdk
+======
+.. automodule:: nd2sdk_wrapper
+    :members:
 
 Indices and tables
 ==================
