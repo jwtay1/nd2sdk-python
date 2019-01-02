@@ -30,7 +30,7 @@ elif platform.startswith("darwin"):
 else:
     pass
 
-nd2File = cdll.LoadLibrary(libPath)
+#nd2File = cdll.LoadLibrary(libPath)
 nd2Read = cdll.LoadLibrary(libPath2)
 
 # Typedefs

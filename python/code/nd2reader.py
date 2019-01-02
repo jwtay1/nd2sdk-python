@@ -1,8 +1,15 @@
+import os
+
+dlldir = os.path.join(os.path.dirname(__file__), "..", "..", 'lib', 'win')
+os.environ["PATH"] += os.pathsep + os.path.join(dlldir)
+
 import nd2sdk_wrapper as nd2
 import simplejson as json
 from pathlib import Path
 from ctypes import c_uint16, pointer, c_uint, POINTER, cast
 import numpy as np
+
+
 
 class ND2reader:
     """  Class to read ND2 files
@@ -58,10 +65,10 @@ class ND2reader:
 
         #Initialize the picture buffer
         self._p_size = nd2.Lim_InitPicture(self._struct_picture,
-                                             self.widthPx,
+                                            self.widthPx,
                                             self.heightPx,
-                                            16,
-                                            1)
+                                            self.bitsPerComponent,
+                                            self.componentCount)
 
         #arr_size = self.heightPx * self.widthPx * self.componentCount
         #arr = c_uint16 * arr_size
