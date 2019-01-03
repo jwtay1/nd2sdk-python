@@ -1,17 +1,25 @@
-from nd2reader import ND2reader
-import simplejson as json
+# from nd2reader import ND2reader
+# import simplejson as json
 
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import numpy as numpy
+# import matplotlib.pyplot as plt
+# import matplotlib.image as mpimg
+# import numpy as numpy
 
-from ctypes import c_uint16
+# from ctypes import c_uint16
 
-R = ND2reader("D:\\Jian\\Documents\\Projects\\myprojects\\ND2SDK\\nd2sdk-wrappers\\sampleND2\\sampleND2.nd2")
+# R = ND2reader("D:\\Jian\\Documents\\Projects\\myprojects\\ND2SDK\\nd2sdk-wrappers\\sampleND2\\sampleND2.nd2")
 
-img = R.getImage(10)
+# img = R.getImage(10)
 
-#plt.imshow(img)
-#plt.show()
+# #plt.imshow(img)
+# #plt.show()
 
-#print(img)
+# #print(img)
+from pathlib import Path
+import sys
+
+libPath = Path(__file__).parent / "lib"
+
+sys.path.append(libPath.resolve())
+
+print(sys.path)
