@@ -2,6 +2,9 @@
 python/code/__pycache__/
 *.py[cod]
 *$py.class
+*.dll
+*.so
+*.dylib
 
 # Sphinx documentation
 python/docs/build/
