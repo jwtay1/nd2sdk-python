@@ -209,6 +209,11 @@ def Lim_FileOpenForRead(filepath):
     Returns:
         fhandle (uint): Handle to open file
 
+    Raises:
+        FileNotFoundError: If filepath does not point to an actual file
+
+        ND2SDKError: If another error occurs
+
     """
     fhandle = _Lim_FileOpenForRead(filepath)
 
@@ -438,12 +443,128 @@ def Lim_FileGetImageData(fhandle, seq_index, bpicture):
 
     return imgmd
 
+
+_Lim_FileGetExperiment = nd2sdk.Lim_FileGetExperiment
+_Lim_FileGetExperiment.argtypes = [LIMFILEHANDLE, POINTER(LIMEXPERIMENT)]
+_Lim_FileGetExperiment.restype = LIMRESULT
+
+def Lim_FileGetExperiment(fhandle):
+    """
+    Returns metadata about the ND acquisition. 
+
+    Args:
+        fhandle (uint): Handle to open file
+    
+    Returns:
+        expmd (LIMEXPERIMENT): Object containing experiment metadata
+            The returned object has the following attributes:
+                uiLevelCount: Number of dimensions excl. wavelength
+                    Wavelength is excluded because Lim_FileGetImageData() 
+                    always returns all channels)
+
+                    For example, if uiLevelCount = 2, then the ND2 file has two additional dimensions apart from the wavelength.                  
+                pAllocatedLevels: Structure with information about dimensions
+                    The structure has the following attributes:
+                        uiExpType: Dimension type
+                            0=time, 1=multipoint, 2=z, 3=other
+                        uiLoopSize: Number of images in the dimension
+                        dInterval: Interval between each image in dimension
+                            milliseconds for time, um for z-stack and is 
+                            undefined (0.0) for multipoint
+
+    Raises:
+        ND2SDKError: If error occurs reading the metadata
+
+    """
+
+    expmd = LIMEXPERIMENT()
+
+    limresult = _Lim_FileGetExperiment(fhandle, expmd)
+    
+    if limresult != 0:
+        raise ND2SDKError(limresult)
+
+    return expmd    
+
+_Lim_GetSeqIndexFromCoords = nd2sdk.Lim_GetSeqIndexFromCoords
+_Lim_GetSeqIndexFromCoords.argtypes = [POINTER(LIMEXPERIMENT), POINTER(LIMUINT)]
+_Lim_GetSeqIndexFromCoords.restype = LIMUINT
+
+def Lim_GetSeqIndexFromCoords(handle_or_md, *coords):
+    """
+    Returns the index of an image specified by its coordinates
+
+    Args:
+        hdl_or_md (uint or structure): Handle to open file or metadata
+            The first argument can either be the handle to an open file or the
+            structure returned by using Lim_FileGetExperiment(). This allows the
+            function to avoid requiring an additional call to
+            Lim_FileGetExperiment() if the metadata already exists.
+        *coords: Coordinates of the image
+            The expected coordinates should be in the following sequence:
+                Time
+                Multipoint (either XY-location or series)
+                Zstep
+                Other
+            The coordinates are zero-based, i.e. the first timepoint is at 
+            coordinate 0.
+
+    Returns:
+        seq_index (uint): Index of the image
+
+    Raises:
+        ValueError: If the requested coordinate does not exist
+
+    """
+
+    if type(handle_or_md) == int:
+        expmd = Lim_FileGetExperiment(handle_or_md)
+    else:
+        expmd = handle_or_md
+
+    #Check that the coordinates supplied are valid
+    maxValues = [0, 0, 0, 0]
+    for iL in range(expmd.uiLevelCount):
+        maxValues[expmd.pAllocatedLevels[iL].uiExpType] = expmd.pAllocatedLevels[iL].uiLoopSize - 1
+
+    for ii in range(len(coords)):
+        if coords[ii] > maxValues[ii]:
+            raise ValueError("Coordinate {} exceeds image dimensions (requested {}, max {})".format(ii, coords[ii], maxValues[ii]))
+
+    #Convert the coords into a c_uint array
+    coords_arr = (c_uint * 4)(*coords)
+    
+    seq_index = _Lim_GetSeqIndexFromCoords(expmd, coords_arr)
+
+    return seq_index
+
+
+class ND2SDKError(Exception):
+    """ Generic exception for errors thrown by SDK """
+
+    def __init__(self, error_code):
+        """
+
+        Args:
+            error_code (int): Error code returned by the SDK call
+        
+        Attributes:
+            __str__: Message with the LIM_ERR value of the error_code
+
+        """
+        self.error_code = error_code
+        
+    def __str__(self):
+        return repr("SDK returned error code {}:{}".format(self.error_code, LIM_ERR[self.error_code]))
+
+
+#Additional functions (not yet converted)
+
 # LIMFILEAPI LIMRESULT       Lim_FileGetImageRectData(LIMFILEHANDLE hFile, LIMUINT uiSeqIndex, LIMUINT uiDstTotalW, LIMUINT uiDstTotalH, LIMUINT uiDstX, LIMUINT uiDstY, LIMUINT uiDstW, LIMUINT uiDstH, void* pBuffer, LIMUINT uiDstLineSize, LIMINT iStretchMode, LIMLOCALMETADATA* pImgInfo);
 
 # LIMFILEAPI LIMRESULT       Lim_FileGetBinaryDescriptors(LIMFILEHANDLE hFile, LIMBINARIES* pBinaries);
 # LIMFILEAPI LIMRESULT       Lim_FileGetBinary(LIMFILEHANDLE hFile, LIMUINT uiSequenceIndex, LIMUINT uiBinaryIndex, LIMPICTURE* pPicture);
 
-# LIMFILEAPI LIMUINT         Lim_GetSeqIndexFromCoords(LIMEXPERIMENT* pExperiment, LIMUINT* pExpCoords);
 # LIMFILEAPI void            Lim_GetCoordsFromSeqIndex(LIMEXPERIMENT* pExperiment, LIMUINT uiSeqIdx, LIMUINT* pExpCoords);
 # LIMFILEAPI LIMRESULT       Lim_GetMultipointName(LIMFILEHANDLE hFile, LIMUINT uiPointIdx, LIMWSTR wstrPointName);
 # LIMFILEAPI LIMINT          Lim_GetZStackHome(LIMFILEHANDLE hFile);
@@ -464,55 +585,3 @@ def Lim_FileGetImageData(fhandle, seq_index, bpicture):
 # LIMFILEAPI LIMRESULT       Lim_GetAlignmentPoints(LIMFILEHANDLE hFile, LIMUINT* puiPosCount, LIMUINT* puiSeqIdx, LIMUINT* puiXPos, LIMUINT* puiYPos, double *pdXPos, double *pdYPos);
 
 # LIMFILEAPI LIMRESULT       Lim_FileGetTextinfo(LIMFILEHANDLE hFile, LIMTEXTINFO* pFileTextinfo);
-
-_Lim_FileGetExperiment = nd2sdk.Lim_FileGetExperiment
-_Lim_FileGetExperiment.argtypes = [LIMFILEHANDLE, POINTER(LIMEXPERIMENT)]
-_Lim_FileGetExperiment.restype = LIMRESULT
-
-def Lim_FileGetExperiment(fhandle):
-    """
-    Returns metadata about the ND acquisition. 
-    
-    The returned object has the following attributes:
-
-        uiLevelCount: Number of dimensions excl. Lambda (since Lim_FileGetImageData() always returns all channels)
-
-        pAllocatedLevels: An array containing information about number of frames within each dimension. The array has the following attributes:
-
-            uiExpType: Dimension type
-
-            uiLoopSize: Number of images in loop
-            dInterval: in milliseconds for time, um for z-stack and is undefined for multipoint
-
-    Args:
-        fhandle (uint): Handle to open file
-    
-    Returns:
-        expmd (LIMEXPERIMENT): Object containing experiment metadata
-
-    Raises:
-        ND2SDKError: If error occurs
-
-    """
-
-    expmd = LIMEXPERIMENT()
-
-    limresult = _Lim_FileGetExperiment(fhandle, expmd)
-    
-    if limresult != 0:
-        raise ND2SDKError(limresult)
-
-    return expmd    
-
-
-
-# LIMFILEAPI LIMRESULT       Lim_FileGetExperiment(LIMFILEHANDLE hFile, LIMEXPERIMENT* pFileExperiment);
-
-class ND2SDKError(Exception):
-
-    def __init__(self, error_code):
-        self.error_code = error_code
-        
-    def __str__(self):
-        return repr("SDK returned error code {}:{}".format(self.error_code, LIM_ERR[self.error_code]))
-

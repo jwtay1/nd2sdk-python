@@ -175,3 +175,6 @@ epub_exclude_files = ['search.html']
 
 
 # -- Extension configuration -------------------------------------------------
+
+html_theme = 'sphinx_rtd_theme'
+
