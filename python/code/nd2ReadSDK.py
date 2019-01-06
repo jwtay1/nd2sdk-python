@@ -81,7 +81,25 @@ LIMMAXPICTUREPLANES = 256
 
 
 class LIMPICTURE(Structure):
-    """ Structure to hold image data """
+    """ 
+    Structure with image data 
+
+    The image data is returned as a ctype pointer. To actually read the data, 
+    create a ctype array that matches the size of the image (uiWidth * uiHeight * uiComponents).
+
+    For an example, see :func:`Lim_FileGetImageData`
+    
+    Attributes:
+        uiWidth (uint): Image width in pixels
+        uiHeight (uint): Image height in pixels
+        uiBitsPerComp (uint): Number of bits per component (channel)
+        uiComponents (uint): Number of components per pixel
+        uiWidthBytes (uint): Number of bytes per row
+        uiSize (uint): Total number of bytes in memory
+        pImageData (uint): Pointer to image data
+
+    """
+
     _fields_ = [("uiWidth", LIMUINT),           # Image width in pixels
                 ("uiHeight", LIMUINT),          # Image height in pixels
                 ("uiBitsPerComp", LIMUINT),     # Number of bits per component 
@@ -92,29 +110,81 @@ class LIMPICTURE(Structure):
                 ]
 
 class LIMBINARYDESCRIPTOR(Structure):
-    """ Describes a binary (masked) layer """
+    """ 
+    Describes a binary (masked) layer
+
+    Attributes:
+        wszName (str): Name of binary layer
+        wszCompName (str): Name of component the binary layer is bound to
+        uiColorRGB (uint): Color of layer for display
+
+    See also: :class:`LIMBINARIES`
+    
+    """
+
     _fields_ = [("wszName", LIMWCHAR * 256),          # Name of binary layer
                 ("wszCompName", LIMWCHAR * 256),      # Name of bound component
                 ("uiColorRGB", LIMUINT)         # Color of layer
                 ]
 
 class LIMBINARIES(Structure):
-    """ Collection of binary layer descriptions """
+    """
+    Structure with binary layer information
+
+    Attributes:
+        uiCount (uint): Number of binary layers
+        pDescriptors (:class:`LIMBINARYDESCRIPTOR`): Binary layer description
+
+    """
+
     _fields_ = [("uiCount", LIMUINT),           #Number of layers
                  ("pDescriptors", LIMBINARYDESCRIPTOR * LIMMAXBINARIES)
                  ]
                  
 class LIMPICTUREPLANE_DESC(Structure):
-    """ Description of the channel (e.g. brightfield, mono) """
-    _fields_ = [("uiCompCount", LIMUINT),   # Number of physical components
-                ("uiColorRGB", LIMUINT),    # RGB color for display
-                ("wszName", LIMWCHAR * 256),      # Name for display
-                ("wszOCName", LIMWCHAR * 256),    # Name of Opt Configuration
-                ("dEmissionWL", c_double)   # Emission wavelength
+    """ 
+    Description of the channel (e.g. brightfield, mono) 
+
+    Attributes:
+        uiCompCount (uint): Number of channels
+        uiColorRGB (uint): RGB color for display
+        wszName (str): Name of channel for display
+        wszOCName (str): Name of optical configuration
+        dEmissionWL (double): Emission wavelength    
+    
+    """
+
+    _fields_ = [("uiCompCount", LIMUINT),
+                ("uiColorRGB", LIMUINT),
+                ("wszName", LIMWCHAR * 256),
+                ("wszOCName", LIMWCHAR * 256),
+                ("dEmissionWL", c_double)
                 ]
 
 class LIMMETADATA_DESC (Structure):
-    """ Acquisition metadata  """
+    """ 
+    Acquisition metadata  
+    
+    Attributes:
+        dTimeStart (double):  Time in Julian Day Number (JDN)
+        dAngle (double): Camera angle
+        dCalibration (double): um/px (0.0 = uncalibrated)
+        dAspect (double): pixel aspect (always 1.0)
+        wszObjectiveName (str): Name of objective lens
+        dObjectiveMag (double): Objective magnification
+        dObjectiveNA (double): Objective NA
+        dRefractIndex1 (double)
+        dRefractIndex2 (double)
+        dPinholeRadius (double): Pinhole radius
+        dZoom (double)
+        dProjectiveMag (double)
+        uiImageType (uint): 0 (normal), 1 (spectral)
+        uiPlaneCount (uint): Number of logical planes (uiPlaneCount <= uiComponentCount)
+        uiComponentCount (uint): Number of physical components
+        pPlanes (:class:`LIMPICTUREPLANE_DESC`)    
+    
+    """
+
     _fields_ = [("dTimeStart", c_double),       # Absolute Time in JDN
                 ("dAngle", c_double),           # Camera Angle
                 ("dCalibration", c_double),     # um/px (0.0 = uncalibrated)
@@ -134,7 +204,27 @@ class LIMMETADATA_DESC (Structure):
                 ]
 
 class LIMTEXTINFO(Structure):
-    """ Description of file """
+    """ 
+    Additional text information
+
+    Attributes:
+        wszImageID (str)
+        wszType (str)
+        wszGroup (str)
+        wszSampleID (str)
+        wszAuthor (str)
+        wszDescription (str)
+        wszCapturing (str)
+        wszSampling (str)
+        wszDate (str)
+        wszConclusion (str)
+        wszInfo1 (str)
+        wszInfo2 (str)
+        wszOptics (str)
+        wszAppVersion (str)
+    
+    """
+
     _fields_ = [("wszImageID", LIMWCHAR * 256) ,
                 ("wszType", LIMWCHAR * 256),
                 ("wszGroup", LIMWCHAR * 256),
@@ -152,17 +242,52 @@ class LIMTEXTINFO(Structure):
                 ]
 
 class LIMEXPERIMENTLEVEL(Structure):
+    """
+    Data structure to hold experiment level metadata
+
+    The values for dInterval have the units milliseconds for time, um for z-stack and undefined (0.0) for multipoint.
+
+    Attributes:
+        uiExpType: Dimension type (0=time, 1=multipoint, 2=z, 3=other)
+        uiLoopSize: Number of images in the dimension
+        dInterval: Interval between each image in dimension
+
+    """
+
     _fields_ = [("uiExpType", LIMUINT),
                 ("uiLoopSize", LIMUINT),    # Number of images in the loop
                 ("dInterval", c_double)     # ms (for Time), um (for ZStack), 
                 ]                           # -1.0 (for Multipoint
                 
 class LIMEXPERIMENT(Structure):
+    """
+    Data structure to hold experimental metadata
+
+    Wavelength is excluded because Lim_FileGetImageData() always returns all channels). For example, if uiLevelCount = 2, then the ND2 file has two additional dimensions apart from the wavelength.
+
+    Attributes:
+        uiLevelCount: Number of dimensions excl. wavelength
+        pAllocatedLevels: Structure with information about dimensions
+        
+    See also: :class:`LIMEXPERIMENTLEVEL`
+               
+    """
+
     _fields_ = [("uiLevelCount", LIMUINT),
                 ("pAllocatedLevels", LIMEXPERIMENTLEVEL * LIMMAXEXPERIMENTLEVEL)
                 ]
 
 class LIMLOCALMETADATA(Structure):
+    """
+    
+    Attributes:
+        dTimeMSec (double): Relative time [msec] from the first frame
+        dXPos (double): Stage XPos
+        dYPos (double): Stage YPos
+        dZPos (double): Stage ZPos
+
+    """
+
     _fields_ = [("dTimeMSec", c_double),
                 ("dXPos", c_double),
                 ("dYPos", c_double),
@@ -170,7 +295,24 @@ class LIMLOCALMETADATA(Structure):
                ]
 
 class LIMATTRIBUTES(Structure):
-    """ Description of image """
+    """ 
+    Description of image 
+    
+    Attributes:
+        uiWidth (uint): Width of images in pixels
+        uiWidthBytes (uint): Line length
+        uiHeight (uint): Height of images in pixels
+        uiComp (uint): Number of components (channels)
+        uiBpcInMemory (uint): Number of bits per component (8 or 16)
+        uiBpcSignificant (uint): Number of significant bits per component
+        uiSequenceCount (uint): Number of images in sequence
+        uiTileWidth (uint): If an image is tiled size of the tile/strip
+        uiTileHeight (uint)
+        uiCompression (uint): 0 (lossless), 1 (lossy), 2 (None)
+        uiQuality (uint): 0 (worst) - 100 (best)
+    
+    """
+
     _fields_ = [("uiWidth", LIMUINT),
                 ("uiWidthBytes", LIMUINT),
                 ("uiHeight", LIMUINT),
@@ -184,6 +326,16 @@ class LIMATTRIBUTES(Structure):
                 ("uiQuality", LIMUINT)]
 
 class LIMFILEUSEREVENT(Structure):
+    """
+
+    Attributes:
+        uiID (uint)
+        dTime (double)
+        wsType (str)
+        wsDescription (str)
+
+    """
+
     _fields_ = [("uiID", LIMUINT),
                 ("dTime", c_double),
                 ("wsType", LIMWCHAR * 128),
@@ -211,7 +363,6 @@ def Lim_FileOpenForRead(filepath):
 
     Raises:
         FileNotFoundError: If filepath does not point to an actual file
-
         ND2SDKError: If another error occurs
 
     """
@@ -253,40 +404,12 @@ _Lim_FileGetAttributes.restype = LIMRESULT
 def Lim_FileGetAttributes(fhandle):
     """
     Returns basic file attributes which are common to all frames
-    
-    The returned object has the following attributes:
-
-        +-------------------+---------------------------------------------+
-        | Field             | Description                                 |
-        +===================+=============================================+
-        | uiWidth           | Width of images                             |
-        +-------------------+---------------------------------------------+
-        | uiWidthBytes      | Number of bytes per row                     |
-        +-------------------+---------------------------------------------+
-        | uiHeight          | Height of images                            |
-        +-------------------+---------------------------------------------+
-        | uiComp            | Number of components (channels)             |
-        +-------------------+---------------------------------------------+
-        | uiBpcInMemory     | Bits per component 8 or 16                  |
-        +-------------------+---------------------------------------------+
-        | uiBpcSignificant  | Bits per component used 8 .. 16             |
-        +-------------------+---------------------------------------------+
-        | uiSequenceCount   | Number of images in the sequences           |
-        +-------------------+---------------------------------------------+
-        | uiTileWidth       | If an image is tiled size of the tile/strip |
-        +-------------------+ otherwise both zero                         |
-        | uiTileHeight      |                                             |
-        +-------------------+---------------------------------------------+
-        | uiCompression     | 0 (lossless), 1 (lossy), 2 (None)           |
-        +-------------------+---------------------------------------------+
-        | uiQuality         | 0 (worst) - 100 (best)                      |
-        +-------------------+---------------------------------------------+
 
     Args:
         fhandle (uint): Handle to open file
     
     Returns:
-        limattr (LIMATTRIBUTES): Object containing file attributes
+        limattr (:class:`LIMATTRIBUTES`): Object containing file attributes
 
     """
     limattr = LIMATTRIBUTES()
@@ -306,30 +429,12 @@ _Lim_FileGetMetadata.restype = LIMRESULT
 def Lim_FileGetMetadata(fhandle):
     """
     Get file metadata
-    
-    The returned object has the following properties:
-        double      dTimeStart;          // Absolute Time in JDN
-        double      dAngle;              // Camera Angle
-        double      dCalibration;        // um/px (0.0 = uncalibrated)
-        double      dAspect;             // pixel aspect (always 1.0)
-        LIMWCHAR    wszObjectiveName[256];
-        double      dObjectiveMag;       // Optional additional information
-        double      dObjectiveNA;        // dCalibration takes into accont all these
-        double      dRefractIndex1;
-        double      dRefractIndex2;
-        double      dPinholeRadius;
-        double      dZoom;
-        double      dProjectiveMag;
-        LIMUINT     uiImageType;         // 0 (normal), 1 (spectral)
-        LIMUINT     uiPlaneCount;        // Number of logical planes (uiPlaneCount                                      <= uiComponentCount)
-        LIMUINT     uiComponentCount;    // Number of physical components (same as                                      uiComp in LIMATTRIBUTES)
-        LIMPICTUREPLANE_DESC pPlanes[LIMMAXPICTUREPLANES];
 
     Args:
         fhandle (uint): Handle to open file
 
     Returns:
-        md (LIMMETADATA_DESC): Object containing file metadata
+        md (:class:`LIMMETADATA_DESC`): Object containing file metadata
 
     """
     md = LIMMETADATA_DESC()
@@ -347,19 +452,7 @@ _Lim_InitPicture.restype = LIMSIZE
 
 def Lim_InitPicture(width, height, bits_per_comp, num_comp):
     """
-    Initializes a memory buffer for the API to return a picture. The values for the arguments can be retrieved using Lim_FileGetAttributes(). The resulting object must be destroyed using Lim_DestroyPicture() to free memory.
-
-    bpicture has the following attributes:
-        LIMUINT     uiWidth;           //width of the image in px. 
-        LIMUINT     uiHeight;          //height of the image in px 
-        LIMUINT     uiBitsPerComp;     //Number of bits per component (8, 10,                                    12, 14, 16). 
-                                       //For binary images, use 32 bits. 
-        LIMUINT     uiComponents;      //Number of components in every pixel 
-                                         (any number up to 160 1:mono, 3:RGB)  
-        LIMUINT     uiWidthBytes;      //Aligned to 4-byte (like windows BITMAP)
-        LIMSIZE     uiSize;            //Size of the image in memory (= 
-                                         uiWidthBytes * uiHeight).  
-        void*       pImageData;        //Pointer to image data.  
+    Initializes a memory buffer for the API to return a picture. The values for the arguments can be retrieved using :func:`Lim_FileGetAttributes`. The resulting object must be destroyed using :func:`Lim_FileGetAttributes` to free memory.
 
     Args:
         width (uint): Image width in pixels
@@ -368,7 +461,7 @@ def Lim_InitPicture(width, height, bits_per_comp, num_comp):
         num_comp (uint): Number of physical components
 
     Returns:
-        bpicture (LIMPICTURE): Object with pointer to picture
+        bpicture (:class:`LIMPICTURE`): Object with pointer to picture
 
     Raises:
         ND2SDKError: If error occurs initializing the picture object
@@ -393,7 +486,7 @@ def Lim_DestroyPicture(bpicture):
     Frees memory used to store picture data
 
     Args:
-        bpicture (LIMPICTURE): Object with pointer to picture
+        bpicture (:class:`LIMPICTURE`): Object with pointer to picture
     
     Returns:
         None
@@ -403,12 +496,9 @@ def Lim_DestroyPicture(bpicture):
 
     """
     
-    limresult = _Lim_DestroyPicture(bpicture)
+    _Lim_DestroyPicture(bpicture)
 
-    if limresult != 0:
-        raise ND2SDKError(limresult)
-
-    return
+    return None
 
 
 _Lim_FileGetImageData = nd2sdk.Lim_FileGetImageData
@@ -424,10 +514,10 @@ def Lim_FileGetImageData(fhandle, seq_index, bpicture):
     Args:
         fhandle (uint): Handle to open file
         seq_index (uint): Sequence index of frame
-        bpicture (LIMPICTURE): Picture object to hold data
+        bpicture (:class:`LIMPICTURE`): Picture object to hold data
 
     Returns:
-        imgmd (LIMLOCALMEDATA): Object containing metadata of frame
+        imgmd (:class:`LIMLOCALMEDATA`): Object containing metadata of frame
 
     Raises:
         ND2SDKError: If error occurs reading the image
@@ -456,21 +546,7 @@ def Lim_FileGetExperiment(fhandle):
         fhandle (uint): Handle to open file
     
     Returns:
-        expmd (LIMEXPERIMENT): Object containing experiment metadata
-            The returned object has the following attributes:
-                uiLevelCount: Number of dimensions excl. wavelength
-                    Wavelength is excluded because Lim_FileGetImageData() 
-                    always returns all channels)
-
-                    For example, if uiLevelCount = 2, then the ND2 file has two additional dimensions apart from the wavelength.                  
-                pAllocatedLevels: Structure with information about dimensions
-                    The structure has the following attributes:
-                        uiExpType: Dimension type
-                            0=time, 1=multipoint, 2=z, 3=other
-                        uiLoopSize: Number of images in the dimension
-                        dInterval: Interval between each image in dimension
-                            milliseconds for time, um for z-stack and is 
-                            undefined (0.0) for multipoint
+        expmd (:class:`LIMEXPERIMENT`): Object containing experiment metadata
 
     Raises:
         ND2SDKError: If error occurs reading the metadata
@@ -494,21 +570,15 @@ def Lim_GetSeqIndexFromCoords(handle_or_md, *coords):
     """
     Returns the index of an image specified by its coordinates
 
+    The first argument can either be the handle to an open file or the
+    structure returned by using :func:`Lim_FileGetExperiment`. This allows the  function to avoid requiring an additional call to :func:`Lim_FileGetExperiment` if the metadata already exists.
+        
+    The expected coordinates should be in the following sequence: Time, Multipoint (either XY-location or series), Zstep, Other. The coordinates are zero-based, i.e. the first timepoint is at coordinate 0.
+
     Args:
         hdl_or_md (uint or structure): Handle to open file or metadata
-            The first argument can either be the handle to an open file or the
-            structure returned by using Lim_FileGetExperiment(). This allows the
-            function to avoid requiring an additional call to
-            Lim_FileGetExperiment() if the metadata already exists.
         *coords: Coordinates of the image
-            The expected coordinates should be in the following sequence:
-                Time
-                Multipoint (either XY-location or series)
-                Zstep
-                Other
-            The coordinates are zero-based, i.e. the first timepoint is at 
-            coordinate 0.
-
+    
     Returns:
         seq_index (uint): Index of the image
 
@@ -538,6 +608,97 @@ def Lim_GetSeqIndexFromCoords(handle_or_md, *coords):
 
     return seq_index
 
+_Lim_FileGetBinaryDescriptors = nd2sdk.Lim_FileGetBinaryDescriptors
+_Lim_FileGetBinaryDescriptors.argtypes = [LIMFILEHANDLE, POINTER(LIMBINARIES)]
+_Lim_FileGetBinaryDescriptors.restype = LIMRESULT
+
+def Lim_FileGetBinaryDescriptors(fhandle):
+    """
+    Returns metadata about the binary layers
+
+    Args:
+        fhandle (uint): Handle to open file
+
+    Returns:
+        binaries (:class:`LIMBINARIES`): Structure with information about the binary layers
+    
+    Raises:
+        ND2SDKError: If any error occurs retrieving the descriptors
+
+    """
+
+    binaries = LIMBINARIES()
+
+    limresult = _Lim_FileGetBinaryDescriptors(fhandle, binaries)
+
+    if limresult != 0:
+        raise ND2SDKError(limresult)
+
+    return binaries
+
+_Lim_FileGetBinary = nd2sdk.Lim_FileGetBinary
+_Lim_FileGetBinary.argtypes = [LIMFILEHANDLE, LIMUINT, LIMUINT, POINTER(LIMPICTURE)]
+_Lim_FileGetBinary.restype = LIMRESULT
+
+def Lim_FileGetBinary(fhandle, seq_index, bin_index, bpicture):
+    """
+    Retrieves an image from a binary layer
+
+    Args:
+        fhandle (uint): Handle to open file
+        seq_index (uint): Sequence index of frame
+        bin_index(uint): Index of binary layer
+        bpicture (:class:`LIMPICTURE`): Picture object created using :func:Lim_InitPicture
+        
+    Returns:
+        None
+
+    Raises:
+        ND2SDKError: If error occurs while reading the binary layers
+
+    """
+
+    limresult = nd2sdk._Lim_FileGetBinary(fhandle,
+                                          seq_index,
+                                          bin_index,
+                                          bpicture)
+
+    if limresult != 0:
+        raise ND2SDKError(limresult)
+    
+    return None
+
+
+_Lim_FileGetTextinfo = nd2sdk.Lim_FileGetTextinfo
+_Lim_FileGetTextinfo.argtypes = [LIMFILEHANDLE, POINTER(LIMTEXTINFO)]
+_Lim_FileGetTextinfo.restype = LIMRESULT
+
+def Lim_FileGetTextinfo(fhandle):
+    """
+    Returns additional text info from the ND2 file
+
+    The text info is optional and may not be populated in the file.
+
+    Args:
+        fhandle (uint): Handle to open file
+
+    Returns:
+        file_text_info (:class:`LIMTEXTINFO`): Text info from file
+
+    Raises:
+        ND2SDKError: If any error occurs
+
+    """
+
+    file_text_info = LIMTEXTINFO()
+
+    limresult = _Lim_FileGetTextinfo(fhandle, file_text_info)
+
+    if limresult != 0:
+        raise ND2SDKError(limresult)
+
+    return file_text_info
+
 
 class ND2SDKError(Exception):
     """ Generic exception for errors thrown by SDK """
@@ -558,12 +719,12 @@ class ND2SDKError(Exception):
         return repr("SDK returned error code {}:{}".format(self.error_code, LIM_ERR[self.error_code]))
 
 
+
+
+
 #Additional functions (not yet converted)
 
 # LIMFILEAPI LIMRESULT       Lim_FileGetImageRectData(LIMFILEHANDLE hFile, LIMUINT uiSeqIndex, LIMUINT uiDstTotalW, LIMUINT uiDstTotalH, LIMUINT uiDstX, LIMUINT uiDstY, LIMUINT uiDstW, LIMUINT uiDstH, void* pBuffer, LIMUINT uiDstLineSize, LIMINT iStretchMode, LIMLOCALMETADATA* pImgInfo);
-
-# LIMFILEAPI LIMRESULT       Lim_FileGetBinaryDescriptors(LIMFILEHANDLE hFile, LIMBINARIES* pBinaries);
-# LIMFILEAPI LIMRESULT       Lim_FileGetBinary(LIMFILEHANDLE hFile, LIMUINT uiSequenceIndex, LIMUINT uiBinaryIndex, LIMPICTURE* pPicture);
 
 # LIMFILEAPI void            Lim_GetCoordsFromSeqIndex(LIMEXPERIMENT* pExperiment, LIMUINT uiSeqIdx, LIMUINT* pExpCoords);
 # LIMFILEAPI LIMRESULT       Lim_GetMultipointName(LIMFILEHANDLE hFile, LIMUINT uiPointIdx, LIMWSTR wstrPointName);
@@ -584,4 +745,3 @@ class ND2SDKError(Exception):
 # LIMFILEAPI LIMRESULT       Lim_SetStageAlignment(LIMFILEHANDLE hFile, LIMUINT uiPosCount, double* pdXSrc, double* pdYSrc, double* pdXDst, double *pdYDst);
 # LIMFILEAPI LIMRESULT       Lim_GetAlignmentPoints(LIMFILEHANDLE hFile, LIMUINT* puiPosCount, LIMUINT* puiSeqIdx, LIMUINT* puiXPos, LIMUINT* puiYPos, double *pdXPos, double *pdYPos);
 
-# LIMFILEAPI LIMRESULT       Lim_FileGetTextinfo(LIMFILEHANDLE hFile, LIMTEXTINFO* pFileTextinfo);

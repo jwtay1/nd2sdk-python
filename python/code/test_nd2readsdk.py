@@ -87,6 +87,12 @@ class TestND2ReadSDK(unittest.TestCase):
                           nd2api.Lim_GetSeqIndexFromCoords,
                           self._fh, 9, 2)
 
+    def test_Lim_FileGetBinaryDescriptors(self):
+
+        binaries = nd2api.Lim_FileGetBinaryDescriptors(self._fh)
+        print(binaries.uiCount)
+
+
 
 if __name__ == '__main__':
     unittest.main()

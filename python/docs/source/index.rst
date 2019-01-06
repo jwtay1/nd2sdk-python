@@ -10,7 +10,8 @@ Documentation for the ND2 SDK Python Wrapper
    :maxdepth: 2
    :caption: Contents:
 
-   nd2sdk
+   nd2ReadSDK
+   nd2reader
 
 
 Indices and tables
