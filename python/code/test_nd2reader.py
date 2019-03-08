@@ -24,7 +24,7 @@ class TestND2Reader(unittest.TestCase):
         plt.imshow(im[:,:,0])
         plt.show()
 
-        
+     
 
 
 if __name__ == "__main__":
