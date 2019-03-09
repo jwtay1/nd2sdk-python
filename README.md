@@ -26,3 +26,9 @@ The code is currently being developed. You can run the test "test_nd2reader.py" 
 ### MATLAB
 
 TBD
+
+## Troubleshooting
+
+Cannot load module because its side-by-side configuration is incorrect. [Windows]
+
+Make sure that you have the Microsoft Visual C++ 2008 Redistributable Package installed for your current architecture (i.e. the x64 version if you are using the x64 libraries). Please go to: https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads.
