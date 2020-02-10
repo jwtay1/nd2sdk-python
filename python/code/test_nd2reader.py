@@ -9,6 +9,7 @@ class TestND2Reader(unittest.TestCase):
 
     def setUp(self):
         self.reader = ND2reader(str(self.test_file.resolve()))
+        print(self.reader.numFrames)
 
     def test_getImage_byIndex(self):
 

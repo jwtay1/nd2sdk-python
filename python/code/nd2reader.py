@@ -43,6 +43,8 @@ class ND2reader:
         self.heightPx = limattributes.uiHeight
         self.bitsPerComponent = limattributes.uiBpcInMemory
         self.numChannels = limattributes.uiComp
+        self.numFrames = limattributes.uiSequenceCount
+        
 
         print(type(limattributes.uiWidthBytes))
 
